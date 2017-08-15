@@ -44,7 +44,7 @@
       require(dplyr)
       #install.packages("reshape2")
       require(reshape2)
-      #install.packages("reshape2")
+      #install.packages("tidyr")
       require(tidyr)
       #install.packages("sqldf")
       options(gsubfn.engine = "R") #fixes tcltk bug; run before require sqldf
@@ -92,12 +92,7 @@
     setwd("~/Git/fisi_lab/hy_prey_density")
   
   
-  ### 3.2 Create path to a LUMA data folder
-    main_data_path <- paste("~/R/R_wd/basic_tools/prey_transect/",
-                            "data/", sep = '')
-    
-  
-  ### 3.3 Create path to Access data folder 
+  ### 3.2 Create path to Access data folder 
     access_data_path <- paste("~/R/R_wd/fisi/access_fisi_data/",
                               sep = '')
       
@@ -125,12 +120,8 @@
 ####            5. Massage Data              ####
 #################################################
        
-  ### 5.1 Remove NA from tblHyena
-    ## a) Remove hyenas from tblHyena which have no birthdate 
-      tblHyenas <- 
- 
       
-  ### 5.2 Convert dates tblHyenas   
+  ### 5.1 Convert dates tblHyenas   
     ## a) convert cub first seen date
       tblHyenas$FirstSeen <- as.POSIXct(as.character 
                                             (tblHyenas$FirstSeen),
@@ -150,7 +141,12 @@
       tblHyenas$Birthdate <- as.POSIXct(as.character 
                                         (tblHyenas$Birthdate),
                                         format='%m/%d/%y')
+  
       
+  ### 5.2 Remove NA from tblHyena
+    ## a) Remove hyenas from tblHyena which have no birthdate 
+      tblHyenas <- tblHyenas %>% drop_na(Birthdate)    
+          
       
   ### 5.3 Convert dates tblPreyCount   
     ## a) convert actual date that transect was run 
@@ -176,7 +172,7 @@
   
       
   ### 6.1 Subset Hyena data by clan
-    main_data <- filter(main_data, (grepl('^Talek$', Clan)))    
+    tblHyenas <- filter(tblHyenas, (grepl('^talek$', Clan)))    
   
   ### 6.2 Subset tblPreyCount by transects of interest    
     tblPreyCount <- filter (tblPreyCount, (grepl 
@@ -184,22 +180,6 @@
                                              Transect)))    
       
       
-  ### 6.3 Join tbyHyenas data to main_data
-    # An INNER join of 'tblHyenas' with 'main_data', making a new
-    # data frame which includes select variables of interest from each 
-    # parent table. Parent tables (tblHyenas and main_data) are linked
-    # where the ID variable matches. 
-      main_data <- sqldf("SELECT
-                             main_data.*           
-                             , tblHyenas. FirstSeen, DenGrad, Disappeared,
-                              Mom, Birthdate, NumberLittermates, Litrank, 
-                              ArrivedDen, LeaveDen, Fate, MortalitySource,
-                              DeathDate, Weaned 
-                             FROM tblHyenas      
-                             INNER JOIN main_data      
-                             ON tblHyenas.ID = main_data.ID
-                             GROUP BY sample_ID")  
-    
       
       
 #################################################
@@ -224,13 +204,13 @@
   ### 7.2 Set Prey Density Calculator Parameters 
   
     ## a) remove data where birthday = NA
-      main_data <- main_data[complete.cases(main_data[,c("Birthdate")]),]
+      #main_data <- main_data[complete.cases(main_data[,c("Birthdate")]),]
     
     ## b) Prey Transect Time Window
       # Define the boundary dates plus and minus the date of interest 
       # (e.g. birthdate); values are in months
-        start <- -3
-        end <- 0
+        start <- -3.0
+        end <- 0.0
     
     ## c) Create New Epmty Dataframe  
       # This is an empty data frame that can store the prey density values
@@ -239,10 +219,11 @@
           
   ### 7.3 Prey Density Calculator   
     ## a) Loop through each hyena in a data frame and calculate prey density
-      for (i in 1:nrow(main_data)) { 
-        date <- ymd(main_data$Birthdate[i])       # loop through 1:n dates
+      for (i in 1:nrow(tblHyenas)) { 
+        date <- ymd(tblHyenas$Birthdate[i])       # loop through 1:n dates
+        ID = paste(tblHyenas$ID[i])               # loop through 1:n IDs
         
-        #date <- round_date(date, "month")         # round dates to first of
+        #date <- round_date(date, "month")        # round dates to first of
                                                   # the closest month, this is 
                                                   # to avoid an over and under
                                                   # counting 
@@ -261,12 +242,18 @@
                                as.Date(tblPreyCount$ActualDate) 
                                %in% day.interval) 
         
+      # Control flow
+        # if there is no date overlap, then go to next loop iteration
+        if (length(date_overlap$Region) < 1) {
+          next
+        }
+        
         # Summation of each prey species 
           # A row by row summation to calculate total prey counts during
           # each bi-montly sampling period for each transect
           date_overlap$total <- rowSums(date_overlap[,c(prey.list)], 
                                         na.rm = T)
-                     
+               
         # use dplyr gather function to transform data into long format 
         sum.prey <- date_overlap %>%
           gather_(key = "prey", value = "prey.count", c(prey.list, "total"))
@@ -282,9 +269,13 @@
         prey_stat <- ddply(sum.prey, .(prey), summarise, 
                            num_transects = sum(!is.na(prey)),
                            mean = mean(density, na.rm = T))
-
+        
+        
         # use dplyr spread function to transform data into wide format                    
         prey_stat <- spread(prey_stat, prey, mean)
+        
+        # add the hyena's ID onto the prey stat table
+        prey_stat <- cbind(prey_stat, ID)
         
         # add the newly created average prey densities to a new dataframe
         # over each iteration of the loop
@@ -293,11 +284,8 @@
       }    
   
      
-  ### 7.4 column bind transect summary with main_data    
-  
-    # add the newly created average prey densities to a new dataframe
-    # over each iteration of the loop
-      main_data <- cbind(main_data, transect_summary)    
+  ### 7.4 Left Join tblHyenas data to transect summary   
+    prey_density <- left_join(transect_summary, tblHyenas, by = "ID")    
       
   
 
@@ -321,7 +309,7 @@
     # name to save each table
     
     ## a) File name for sample_request table
-      csv.file.name.prey <- paste ("./basic_tools/prey_transect/output/prey_density", 
+      csv.file.name.prey <- paste ("./output/prey_density", 
                                       date, ".csv", sep= "") 
    
       
@@ -330,5 +318,5 @@
     # data folder in the working directory.
     
     ## a) Save sample_request table
-       write.csv (main_data, file = csv.file.name.prey)
+       write.csv (prey_density, file = csv.file.name.prey)
   
