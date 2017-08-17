@@ -230,6 +230,9 @@
         
         start.date <- date %m+% months(start)     # start date minus # months
         
+        
+        start.date <- date %m+% months(period$start)
+        
         end.date <- date %m+% months(end)         # start date plus # months
       
         day.interval <-  seq.Date(from = start.date,    # sequence of all days in
@@ -256,7 +259,7 @@
                
         # use dplyr gather function to transform data into long format 
         sum.prey <- date_overlap %>%
-          gather_(key = "prey", value = "prey.count", c(prey.list, "total"))
+          gather_(key = "prey", value = "prey.count", c(prey.list, "total")) #get rid of prey list and paste on period ID to 'total'
         
         # calculate the density of each species of prey density counted along
         # each transect (in square kilometers); assumes prey are counted 
