@@ -209,13 +209,23 @@
     ## b) Prey Transect Time Window
       # Define the boundary dates plus and minus the date of interest 
       # (e.g. birthdate); values are in months
-        start <- -3.0
-        end <- 0.0
+        #start <- -3.0
+        #end <- 0.0
+        period <- c("gest", "birth-3")
+        start <- c(-3, 0.0)
+        end <- c(0.0, 3.0)
+        
+        period_data <- data.frame(period, start, end)
+    
+  
+      
+    
     
     ## c) Create New Epmty Dataframe  
       # This is an empty data frame that can store the prey density values
       transect_summary  <- c()  
-  
+      
+    for (j in 1:nrow(period_data)) {
           
   ### 7.3 Prey Density Calculator   
     ## a) Loop through each hyena in a data frame and calculate prey density
@@ -228,12 +238,12 @@
                                                   # to avoid an over and under
                                                   # counting 
         
-        start.date <- date %m+% months(start)     # start date minus # months
+        start.date <- date %m+% months(period_data$start[j])     # start date minus # months
         
         
-        start.date <- date %m+% months(period$start)
+
         
-        end.date <- date %m+% months(end)         # start date plus # months
+        end.date <- date %m+% months(period_data$end[j])         # start date plus # months
       
         day.interval <-  seq.Date(from = start.date,    # sequence of all days in
                             to = end.date,        # between start and end date
@@ -245,21 +255,41 @@
                                as.Date(tblPreyCount$ActualDate) 
                                %in% day.interval) 
         
-      # Control flow
-        # if there is no date overlap, then go to next loop iteration
-        if (length(date_overlap$Region) < 1) {
-          next
-        }
-        
+        # Control flow
+          # if there is no date overlap, then go to next loop iteration
+            if (length(date_overlap$Region) < 1) {
+              next
+            }
+            
         # Summation of each prey species 
           # A row by row summation to calculate total prey counts during
           # each bi-montly sampling period for each transect
           date_overlap$total <- rowSums(date_overlap[,c(prey.list)], 
                                         na.rm = T)
-               
-        # use dplyr gather function to transform data into long format 
+         
+        # Rename total variable to include time period
+          # Note need to specify use of plyr and not dplyr
+          date_overlap <- plyr::rename(date_overlap, c(total = paste("total_", 
+                                                     period_data$period[j],
+                                                sep = '')))
+        
+                  
+        # use dplyr gather function to transform data into long format
+        # this version list all prey species for each hyena during each
+        # prey period
         sum.prey <- date_overlap %>%
-          gather_(key = "prey", value = "prey.count", c(prey.list, "total")) #get rid of prey list and paste on period ID to 'total'
+          gather_(key = "prey", value = "prey.count",
+                  c(prey.list, (paste("total_", 
+                                      period_data$period[j], sep = '')))) 
+        
+        # use dplyr gather function to transform data into long format
+        # this version list only total prey for each hyena during each
+        # prey period
+        #sum.prey <- date_overlap %>%
+        #  gather_(key = "prey", value = "prey.count",
+        #          c(paste("total_",
+        #                  period_data$period[j], sep = '')))
+        
         
         # calculate the density of each species of prey density counted along
         # each transect (in square kilometers); assumes prey are counted 
@@ -273,12 +303,17 @@
                            num_transects = sum(!is.na(prey)),
                            mean = mean(density, na.rm = T))
         
-        
-        # use dplyr spread function to transform data into wide format                    
-        prey_stat <- spread(prey_stat, prey, mean)
-        
         # add the hyena's ID onto the prey stat table
         prey_stat <- cbind(prey_stat, ID)
+        
+        # add the prey-period onto the prey stat table
+        prey_stat$period <- paste(period_data$period[j])
+        
+        prey_stat <- prey_stat %>% 
+          unite(prey.period, prey, period, sep = "_")
+        
+        # use dplyr spread function to transform data into wide format                    
+        #prey_stat2 <- spread(prey_stat, prey, mean)
         
         # add the newly created average prey densities to a new dataframe
         # over each iteration of the loop
@@ -286,7 +321,9 @@
     
       }    
   
-     
+    }  
+      
+      
   ### 7.4 Left Join tblHyenas data to transect summary   
     prey_density <- left_join(transect_summary, tblHyenas, by = "ID")    
       
