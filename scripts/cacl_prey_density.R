@@ -2,7 +2,7 @@
 ####         Calculate Prey Counts           ####
 ####            and Prey Density             ####
 ####            By: Zach Laubach             ####
-####       last updated: 15 Aug 2017         ####
+####       last updated: 22 Aug 2017         ####
 #################################################
 
   ### PURPOSE: This code is desingned to summarise the number of prey counted
@@ -332,12 +332,28 @@
    
          
   ### 7.6 Reshape the final prey count metadata
+    ## a) combine/unite the period name to each of the prey type names
+      transect_metadata <- transect_metadata[!duplicated 
+                                             (transect_metadata[c("ID", 
+                                                                  "period")]), ]
+      
+    ## b) copy the text "num.transects" to period to update variable name 
+      transect_metadata$period <- with(transect_metadata, 
+                                             paste("num.transects",period, 
+                                                   sep="."))
+      
+    ## c) use dplyr spread function to transform data into wide format   
+      transect_metadata <- transect_metadata %>% 
+        spread(period, num_transects) 
       
       
       
-      
-      
-  ### 7.7 Left Join tblHyenas data to transect summary   
+  ### 7.8 Left Join transect metadata to transect summary   
+    transect_summary <- left_join(transect_summary, 
+                                  transect_metadata, by = "ID") 
+    
+    
+  ### 7.9 Left Join tblHyenas data to transect summary   
     prey_density <- left_join(transect_summary, tblHyenas, by = "ID")    
       
   
