@@ -207,9 +207,9 @@
       # Define the boundary dates as periods between a range plus and minus 
       # the date of interest (e.g. birthdate) and save these periods in 
       # a data frame; values are in months
-        period <- c("gest", "birth-3")
-        start <- c(-3, 0.0)
-        end <- c(0.0, 3.0)
+        period <- c( "peri_concpt", "gest", "birth-3", "3-6", "6-9")
+        start <- c(-6, -3, 0, 3, 6)
+        end <- c(-3, 0, 3, 6, 9)
         
         period_data <- data.frame(period, start, end)
 
