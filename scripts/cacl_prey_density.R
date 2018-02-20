@@ -19,6 +19,7 @@
     # 3: Set Globals
     # 4: Data transformations
     # 5: Calculate prey density
+    # 6: Save prey density table
 
 
 
@@ -333,34 +334,32 @@
       
   
 
-#################################################
-####       8. Save Intermediate Tables       ####
-####             as Spreadsheets             ####
-#################################################
+###############################################################################
+##############            6.  Save prey density table            ##############
+###############################################################################
 
-  # Save intermediate tables as spreadsheets with a .cvs extension and today's
-  # date. Files are saved in the 'data' folder or the 'output' folder
-  # in the working directory.
+  # Save prey density table as a spreadsheet a with a .cvs extension and 
+  # today's date. Files are saved in the 'output' folder in the working 
+  # directory.
 
-  ### 8.1 Set up date parameters
+  ### 6.1 Set up date parameters
     # print today's date
     today <- Sys.Date()
     date <- format(today, format="%d%b%Y")
    
 
-  ### 8.2 Generate File Names
-    # For each table that will be saved as a .csv file, first generate a file 
-    # name to save each table
+  ### 6.2 Generate File Names
+    # For the table that will be saved as a .csv file, first generate a file 
     
     ## a) File name for sample_request table
       csv.file.name.prey <- paste ("./output/", clan.sub,"_prey_density", 
                                       date, ".csv", sep= "") 
    
       
-  ### 8.3 Save Tables 
-    # Save each data frame as a .csv file (a spreadsheet/table) into the 
-    # data folder in the working directory.
+  ### 6.3 Save Tables 
+    # Save the data frame as a .csv file (a spreadsheet/table) into the 
+    # output folder in the working directory.
     
-    ## a) Save sample_request table
+    ## a) Save prey_density table
        write.csv (prey_density, file = csv.file.name.prey)
   
