@@ -293,16 +293,11 @@
       
   
   ### 5.4 Reshape the final prey count data
-    ## a) copy the period name to the number of transects
-    #  transect_summary2$num.transects <- with(transect_metadata, 
-    #                                         paste(num.transects, period, 
-    #                                               sep="."))
-      
-    ## b) combine/unite the period name to each of the prey type names
+    ## a) combine/unite the period name to each of the prey type names
       transect_summary <- transect_summary %>% 
         unite(prey.period, prey, period, sep = ".") 
       
-    ## c) use dplyr spread function to transform data into wide format                    
+    ## b) use dplyr spread function to transform data into wide format                    
       transect_summary <- transect_summary %>%
         spread(prey.period, mean)
    
