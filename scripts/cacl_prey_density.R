@@ -20,10 +20,6 @@
     # 4: Data transformations
     # 5: Calculate prey density
 
-    # 6:  
-    # 7: Calculate Prey Density
-    # 8: Save Intermediate Tables as Spreadsheets
-
 
 
 ###############################################################################
