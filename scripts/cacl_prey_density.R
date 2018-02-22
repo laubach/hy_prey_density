@@ -94,7 +94,7 @@
 ###############################################################################    
         
     
-  ### 3.1 Select prey census routes
+  ### 3.1 Prey census routes
     ## a) Name and group prey transects 
       north.trans <- c("rsp", "north")
       south.trans <- c("s1", "s2")
@@ -103,17 +103,25 @@
       marariver.trans <- c("r1", "r2")
       talek.trans <- c("whigh", "wlow") #census route 3 (W3)
       narok.trans <- c("whigh", "wlow", "w3")
-      ## Note 1: talek and fig tree (for talek trans )
+      ## Note 1: talek and fig tree (for talek trans); mara river == prozac
       ## Note 2: exclude burns; use 6 month or possibly a 3 month window but 
         # not smaller (Kay's advice)
    
 #**************************** USER DEFINED START ******************************#
     ## b) Select prey routes  
-      # on the right side of <- type one of the above transect group names
-      prey.route <- narok.trans
-#***************************** USER DEFINED END *******************************#     
+      # on the right side of '<-', type one of the above transect group names
+      prey.route <- tm.trans
       
-    ## c) Subset tblPreyCount by transects of interest    
+    ## c) File name
+      # in between the quotes on the right side of '<-', type the same 
+      # transect group name. this will name the output .csv file
+      file.name <- 'tm.trans'
+#***************************** USER DEFINED END *******************************#     
+    
+    ## d) Update formatting of file.name
+      file.name <- gsub('\\.', '_', file.name)
+        
+    ## e) Subset tblPreyCount by transects of interest    
       tblPreyCount <- filter (tblPreyCount, 
                               (grepl (paste (prey.route, collapse = "|"),
                                       transect)))    
@@ -122,12 +130,13 @@
   ### 3.2 Subet tblHyenas
 #**************************** USER DEFINED START ******************************#
     ## a) Select clan  
-      # in between the quotes on the right side of <-, type a hyena clan name
-      clan.sub <- 'talek'
+      # in between the quotes on the right side of '<-', type a clan(s) name
+      clan.sub <- c('serena n', 'serena s', 'happy zebra')
 #***************************** USER DEFINED END *******************************#  
 
     ## b) Subset tblHyena by clan
-      tblHyenas <- filter(tblHyenas, (grepl(paste0('^',clan.sub,'$'), clan))) 
+      tblHyenas <- filter(tblHyenas, (grepl(paste('^',clan.sub,'$', sep = '',
+                                                  collapse = '|'), clan))) 
       
       
   ### 7.2 Set date parameters 
@@ -347,8 +356,9 @@
     # For the table that will be saved as a .csv file, first generate a file 
     
     ## a) File name for sample_request table
-      csv.file.name.prey <- paste ("./output/", clan.sub,"_prey_density", 
-                                      date, ".csv", sep= "") 
+      csv.file.name.prey <- paste0(here(), "/output/", file.name, 
+                                            "_prey_density",
+                                            date, ".csv") 
    
       
   ### 6.3 Save Tables 
@@ -357,4 +367,4 @@
     
     ## a) Save prey_density table
        write.csv (prey_density, file = csv.file.name.prey)
-  
+
