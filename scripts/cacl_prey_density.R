@@ -2,7 +2,7 @@
 ##############               Calculate Prey Counts               ##############
 ##############                 and Prey Density                  ##############
 ##############                 By: Zach Laubach                  ##############
-##############             last updated: 19 Feb 2018             ##############
+##############             last updated: 22 Aug 2018             ##############
 ###############################################################################
 
   ### PURPOSE: This code is desingned to summarise the number of prey counted
@@ -50,7 +50,7 @@
     
     # Check for lubridate and install if not already installed
     if (!'lubridate' %in% installed.packages()[,1]){
-      install.packages ('sqldf')
+      install.packages ('lubridate')
     }
     # load lubridate packages
     library ('lubridate')
@@ -69,14 +69,20 @@
     sessionInfo()
   
     # Developed in:   
-    # R version 3.4.3 (2017-11-30)
+    # R version 3.5.1 (2018-07-02)
     # Platform: x86_64-apple-darwin15.6.0 (64-bit)
-    # Running under: macOS Sierra 10.12.4
+    # Running under: macOS High Sierra 10.13.6
 
     
   ### 1.4 set working directory  
     setwd(here())
 
+    
+  ### 1.5 Source functions
+    ## a) fix dates and times functions
+    source (file = paste0("/Volumes/Holekamp/code_repository/R", 
+                          "/4_scripts_source/fix_dates_and_times.R"))
+    
     
     
 ###############################################################################
@@ -84,11 +90,22 @@
 ###############################################################################  
   
   ### 2.1 Import Access fisi backend
-    # read in tidy Access fisi backend tables and save as a data frames
-    source(paste0("/Volumes/Holekamp/code_repository/R/1_output_tidy_tbls/",
-                  "load_tidy_tbls.R"))
+    ## a) read in tidy Access fisi backend tables and save as a data frames
+    #source(paste0("/Volumes/Holekamp/code_repository/R/1_output_tidy_tbls/",
+    #              "load_tidy_tbls.R"))
+    
+    ## b) manually load tblPreyCount  
+    tblPreyCount <- read.csv(paste0("/Volumes/Holekamp/code_repository/R",
+                                     "/1_output_tidy_tbls/tblPreyCount.csv"),
+                             header = T)
+    
+    ## c) manually load tblHyenas 
+    tblHyenas <- read.csv(paste0("/Volumes/Holekamp/code_repository/R",
+                                    "/1_output_tidy_tbls/tblHyenas.csv"),
+                          header = T, colClasses = 'character')
+    
 
-
+    
 ###############################################################################
 ##############                  3. Set Globals                   ##############
 ###############################################################################    
@@ -110,11 +127,13 @@
 #**************************** USER DEFINED START ******************************#
     ## b) Select prey routes  
       # on the right side of '<-', type one of the above transect group names
+#      prey.route <- narok.trans
       prey.route <- tm.trans
       
     ## c) File name
       # in between the quotes on the right side of '<-', type the same 
       # transect group name. this will name the output .csv file
+#      file.name <- 'narok.trans'
       file.name <- 'tm.trans'
 #***************************** USER DEFINED END *******************************#     
     
@@ -131,7 +150,8 @@
 #**************************** USER DEFINED START ******************************#
     ## a) Select clan  
       # in between the quotes on the right side of '<-', type a clan(s) name
-      clan.sub <- c('serena n', 'serena s', 'happy zebra')
+#      clan.sub <- c('fig.tree', 'mara.river', 'talek')
+      clan.sub <- c('serena.s', 'serena.n', 'happy.zebra')
 #***************************** USER DEFINED END *******************************#  
 
     ## b) Subset tblHyena by clan
@@ -139,15 +159,15 @@
                                                   collapse = '|'), clan))) 
       
       
-  ### 7.2 Set date parameters 
+  ### 3.3 Set date parameters 
 #**************************** USER DEFINED START ******************************#
     ## a) Select a date variable
       # in between the quotes on the right side of <-, type the varialbe name
       # of the date to be used. This date is the reference around which 
       # prey counts/densities will be calucated for each hyena
-      date.select<- 'birthdate'
+      date.select <- 'birthdate'
       
-    ## b) Create prey transect time window/periods
+    ## c) Create prey transect time window/periods
       # Define the boundaries for calculating prey counts/densities base on
       # the selected date varialbe. This creates a range plus and minus 
       # the date of interest (e.g. birthdate) and saves these periods in 
@@ -157,7 +177,7 @@
         # list of names
         period <- c( "peri.concpt", "gest", "birth-3", "3-6", "6-9")
         
-        # starting periods; to the right of the <-, type a comman delimited 
+        # starting periods; to the right of the <-, type a comma delimited 
         # list of numbers; these are months from the ref from date; 
         # has to be paired with an end date
         start <- c(-6, -3, 0, 3, 6)
@@ -166,7 +186,7 @@
         # list of numbers; these are months from the ref from date; 
         # has to be paired with a start date
         end <- c(-3, 0, 3, 6, 9)
-#**************************** USER DEFINED START ******************************#        
+#**************************** USER DEFINED END *******************************#        
     
     ## c) Combine period info into a data frame    
       # the data frame containing the time windows/periods
@@ -179,9 +199,18 @@
 ############################################################################### 
       
   ### 4.1 Remove NA from tblHyena
-    ## a) Remove hyenas from tblHyena which have no birthdate 
-      tblHyenas <- tblHyenas %>% drop_na(birthdate)    
-      
+    ## a) Remove hyenas from tblHyena which have no date 
+      tblHyenas <- tblHyenas %>% drop_na(date.select)
+
+
+#***************************** TEMPORARY FIX *********************************#     
+  ### 4.2 Format Date 
+    ## a) NOTE: Make sure dates are stored as a date in format yyyy-mm-dd
+    ## Convert date to formatted date
+   
+   #   tblHyenas$birthdate <-as.Date(tblHyenas$birthdate, format = "%d-%b-%y")
+#***************************** TEMPORARY FIX *********************************#  
+
       
       
 ###############################################################################
@@ -211,9 +240,8 @@
     ## b) Make Transect Metadata data frame  
       # This is an empty data frame that can store metadata (eg. number of
       # transects during each prey period)
-      transect_metadata <-c()
+      transect_metadata <- c()
 
-  
   ### 5.3 Prey Density Calculator
     ## a) Loop through each prey period
     for (j in 1:nrow(period_data)) {
@@ -221,7 +249,9 @@
     ## b) Loop through each hyena in a data frame and calculate prey density
       for (i in 1:nrow(tblHyenas)) { 
         # loop through 1:n dates
-        date <- ymd (tblHyenas[i, c(date.select)])
+        date <- dmy (tblHyenas[i, date.select]) # convert character to Date
+                                                 # using Lubridate; NOT working
+        #date <- tblHyenas[1, date.select]
         # loop through 1:n IDs
         id = paste (tblHyenas$id[i])               
         
