@@ -115,10 +115,13 @@
     ## a) Name and group prey transects 
       north.trans <- c("rsp", "north")
       south.trans <- c("s1", "s2")
-      hz.trans <- c("burn1", "burn2", "burn3", "sst")
+      hz.trans <- c("sst")
+      hz.trans.burn <- c("burn1", "burn2", "burn3", "sst")
       tm.trans <- c("rsp", "north", "s1", "s2", "sst")
+      
       marariver.trans <- c("r1", "r2")
-      talek.trans <- c("whigh", "wlow") #census route 3 (W3)
+      talek.trans <- c("whigh", "wlow", "w3") #census route 3 (W3)
+      ft.trans <- c("wlow", "w3")
       narok.trans <- c("whigh", "wlow", "w3")
       ## Note 1: talek and fig tree (for talek trans); mara river == prozac
       ## Note 2: exclude burns; use 6 month or possibly a 3 month window but 
@@ -127,14 +130,25 @@
 #**************************** USER DEFINED START ******************************#
     ## b) Select prey routes  
       # on the right side of '<-', type one of the above transect group names
-#      prey.route <- narok.trans
-      prey.route <- tm.trans
+#      prey.route <- north.trans
+#      prey.route <- south.trans
+#      prey.route <- hz.trans
+      
+#      prey.route <- marariver.trans
+#      prey.route <- talek.trans
+      prey.route <- ft.trans
       
     ## c) File name
       # in between the quotes on the right side of '<-', type the same 
       # transect group name. this will name the output .csv file
-#      file.name <- 'narok.trans'
-      file.name <- 'tm.trans'
+#      file.name <- "north.trans"
+#      file.name <- "south.trans"
+#      file.name <- "hz.trans"
+      
+#      file.name <- "marariver.trans"
+#      file.name <- "talek.trans"
+      file.name <- "ft.trans"
+      
 #***************************** USER DEFINED END *******************************#     
     
     ## d) Update formatting of file.name
@@ -150,8 +164,13 @@
 #**************************** USER DEFINED START ******************************#
     ## a) Select clan  
       # in between the quotes on the right side of '<-', type a clan(s) name
-#      clan.sub <- c('fig.tree', 'mara.river', 'talek')
-      clan.sub <- c('serena.s', 'serena.n', 'happy.zebra')
+#      clan.sub <- c('serena.n')
+#      clan.sub <- c('serena.s')
+#      clan.sub <- c('happy.zebra')
+      
+#      clan.sub <- c('mara.river')
+#      clan.sub <- c('talek')
+      clan.sub <- c('fig.tree')
 #***************************** USER DEFINED END *******************************#  
 
     ## b) Subset tblHyena by clan
