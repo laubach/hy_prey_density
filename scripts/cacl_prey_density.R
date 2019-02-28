@@ -131,24 +131,24 @@
 #**************************** USER DEFINED START ******************************#
     ## b) Select prey routes  
       # on the right side of '<-', type one of the above transect group names
-      prey.route <- north.trans
+#      prey.route <- north.trans
 #      prey.route <- south.trans
 #      prey.route <- hz.trans
       
 #      prey.route <- marariver.trans
 #      prey.route <- talek.trans
-#      prey.route <- ft.trans
+      prey.route <- ft.trans
       
     ## c) File name
       # in between the quotes on the right side of '<-', type the same 
       # transect group name. this will name the output .csv file
-      file.name <- "north.trans"
+#      file.name <- "north.trans"
 #      file.name <- "south.trans"
 #      file.name <- "hz.trans"
       
 #      file.name <- "marariver.trans"
-#      file.name <- "talek.trans"
-#      file.name <- "ft.trans"
+#     file.name <- "talek.trans"
+      file.name <- "ft.trans"
       
 #***************************** USER DEFINED END *******************************#     
     
@@ -165,13 +165,13 @@
 #**************************** USER DEFINED START ******************************#
     ## a) Select clan  
       # in between the quotes on the right side of '<-', type a clan(s) name
-      clan.sub <- c('serena.n')
+#      clan.sub <- c('serena.n')
 #      clan.sub <- c('serena.s')
 #      clan.sub <- c('happy.zebra')
       
 #      clan.sub <- c('mara.river')
 #      clan.sub <- c('talek')
-#      clan.sub <- c('fig.tree')
+      clan.sub <- c('fig.tree')
 #***************************** USER DEFINED END *******************************#  
 
     ## b) Subset tblHyena by clan
@@ -314,11 +314,22 @@
           date_overlap$gnu.zebra <- rowSums(date_overlap[,c("gnu","zebra")], 
                                         na.rm = T)
           
-        # Summation main food sournce non-migration species
-          # A row by row summation to calculate gnu + zebra prey counts during
-          # each bi-montly sampling period for each transect
+        # Summation non-migration species
+          # A row by row summation to calculate thomsons and topi prey counts 
+          # during each bi-montly sampling period for each transect
           date_overlap$thom.topi <- rowSums(date_overlap[,
                                                          c("thomsons", "topi")], 
+                                            na.rm = T)
+          
+          
+        # Summation main food sournce species
+          # A row by row summation to calculate gnu + zebra + thomsons + topi 
+          # and impala prey counts during each bi-montly sampling period 
+          # for each transect
+          date_overlap$prim.prey <- rowSums(date_overlap[,
+                                                         c("gnu","zebra", 
+                                                           "thomsons", "topi",
+                                                           "impala")], 
                                             na.rm = T)
          
         # use dplyr gather function to transform data into long format
@@ -327,7 +338,7 @@
         sum_prey <- date_overlap %>%
           gather_(key = "prey", value = "prey.count",
                   c(prey.list, (paste("total")), (paste("gnu.zebra")),
-                                (paste("thom.topi"))))
+                                (paste("thom.topi")), (paste("prim.prey"))))
         
         # calculate the density of each species of prey density counted along
         # each transect (in square kilometers); assumes prey are counted 
